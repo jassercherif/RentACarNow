@@ -3,14 +3,16 @@ package dev.jasser.RentACarNowBack.utils;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JWTUtil {
@@ -22,7 +24,7 @@ public class JWTUtil {
 	}
 	public boolean isTokenValid(String token, UserDetails userDetails) {
 		final String userName = extractUserName(token);
-		return(userName.equals(userDetails.getUserName()))&& !isTokenExpired(token);
+		return(userName.equals(userDetails.getUsername()))&& !isTokenExpired(token);
 	}
 	private <T> T extractClaim(String token, Function<Claims,T> claimsResolvers) {
 		final Claims claims = extractAllClaims(token);
@@ -32,12 +34,12 @@ public class JWTUtil {
 		return Jwts.builder().setClaims(extraClaims).setSubject(userDetails.getUsername())
 				.setIssuedAt(new Date(System.currentTimeMillis()))
 				.setExpiration(new Date(System.currentTimeMillis()+ 1000 * 60 * 24))
-				.signWith(getSigningKey(),SignatureAlgorithm.HS256).compact();
+				.signWith(getSigninKey(),SignatureAlgorithm.HS256).compact();
 	}
-	public String generateRefreshToken(Map<String,Object>extraClaims, UserDetails) {
+	public String generateRefreshToken(Map<String,Object>extraClaims, UserDetails userDetails) {
 		return Jwts.builder().setClaims(extraClaims).setSubject(userDetails.getUsername())
 				.setExpiration(new Date(System.currentTimeMillis()+ 604800000))
-				.signWith(getSigningKey(),SignatureAlgorithm.HS256).compact();
+				.signWith(getSigninKey(),SignatureAlgorithm.HS256).compact();
 	}
 	public boolean isTokenExpired(String token) {
 		return extractExpiration(token).before(new Date());
@@ -46,11 +48,11 @@ public class JWTUtil {
 		return extractClaim(token, Claims::getExpiration);
 	}
 	private Claims extractAllClaims(String token) {
-		return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token)
+		return Jwts.parserBuilder().setSigningKey(getSigninKey()).build().parseClaimsJws(token)
 				.getBody();
 	}
 	private Key getSigninKey() {
 		byte[] keyBytes = Decoders.BASE64.decode("413F4428472B46250655368566D5970337336763979244226452948404D6351");
-		return Keys.nmacShakeyFor(keyBytes);
+		return Keys.hmacShaKeyFor(keyBytes);
 	}
 }
