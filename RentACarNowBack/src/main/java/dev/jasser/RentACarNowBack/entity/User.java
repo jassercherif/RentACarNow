@@ -27,6 +27,12 @@ public class User implements UserDetails {
 
     private String name;
 
+	private String email;
+
+    private String password;
+
+    private UserRole userRole;
+
     public Long getId() {
 		return id;
 	}
@@ -66,12 +72,6 @@ public class User implements UserDetails {
 	public void setUserRole(UserRole userRole) {
 		this.userRole = userRole;
 	}
-
-	private String email;
-
-    private String password;
-
-    private UserRole userRole;
     
     @Override 
     public Collection<? extends GrantedAuthority> getAuthorities(){
